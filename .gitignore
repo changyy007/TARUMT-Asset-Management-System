@@ -1,0 +1,10 @@
+# Ignore sensitive server credentials
+.vscode/sftp.json
+
+# Ignore local config files with potential secrets
+/js/config.php
+/js/config.js
+
+# Ignore environment/upload backups
+/picture/*
+!.gitignore
