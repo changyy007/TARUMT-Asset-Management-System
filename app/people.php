@@ -35,7 +35,7 @@
         </div>
 
         <!-- Add People Button at right-upper corner -->
-        <div>
+        <div data-staff-only class="d-none">
             <button type="button" onclick="openAddPersonModal()" class="btn btn-primary btn-sm px-3 rounded-pill d-flex align-items-center gap-2 fw-semibold shadow-sm">
                 <i class="bi bi-person-plus-fill fs-6"></i>
                 <span>Add People</span>
@@ -148,6 +148,7 @@
 
     let allPeople = [];
     let currentCategory = "ALL";
+    let viewerIsStaff = false;
 
     // Seed initial users if users collection is empty
     const INITIAL_USERS = [
@@ -265,12 +266,13 @@
 
                     <!-- Column 4: Action -->
                     <div class="col-12 col-md-2 text-md-end d-flex align-items-center justify-content-md-end gap-2">
+                        ${viewerIsStaff ? `
                         <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="openEditPersonModal('${person.id}')" title="Edit Person">
                             <i class="bi bi-pencil me-1"></i>Edit
                         </button>
                         <button type="button" class="btn btn-sm btn-outline-danger rounded-circle p-1 px-2" onclick="deletePerson('${person.id}', '${idVal}')" title="Remove User">
                             <i class="bi bi-trash"></i>
-                        </button>
+                        </button>` : `<span class="text-muted small">—</span>`}
                     </div>
                 </div>
             </div>`;
@@ -283,6 +285,7 @@
        PEOPLE CRUD
        ==================================================== */
     window.openAddPersonModal = () => {
+        if (!viewerIsStaff) return;
         document.getElementById('personModalTitle').innerHTML = `<i class="bi bi-person-plus text-primary me-2"></i>Add Authorized Person`;
         document.getElementById('person-mode').value = "add";
         document.getElementById('person-login-id').value = "";
@@ -293,6 +296,7 @@
     };
 
     window.openEditPersonModal = (docId) => {
+        if (!viewerIsStaff) return;
         const person = allPeople.find(p => p.id === docId);
         if (!person) return;
 
@@ -368,6 +372,7 @@
     });
 
     window.deletePerson = async (docId, displayId) => {
+        if (!viewerIsStaff) return;
         if (confirm(`Are you sure you want to revoke login access and delete "${displayId}"?`)) {
             try {
                 await deleteDoc(doc(db, "users", docId));
@@ -378,6 +383,10 @@
         }
     };
 
-    // Initialize
+    window.addEventListener('userRoleReady', (e) => {
+        viewerIsStaff = e.detail.role === 'staff';
+        renderPeopleList();
+    });
+
     loadPeople();
 </script>

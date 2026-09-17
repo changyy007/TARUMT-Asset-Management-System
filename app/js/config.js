@@ -48,10 +48,10 @@ export async function getCurrentUserRole() {
         if (!snap.empty && snap.docs[0].data().role) {
           resolve(snap.docs[0].data().role.toLowerCase()); return;
         }
-        resolve("staff");
+        resolve("student");
       } catch (e) {
         console.warn("Could not fetch user role:", e);
-        resolve("staff");
+        resolve("student");
       }
     });
   });

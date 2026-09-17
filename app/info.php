@@ -28,12 +28,19 @@
             object-fit: cover;
             width: 100%;
             border-radius: 0.75rem;
+            box-shadow: none !important;
+            border: none !important;
+        }
+        .asset-photo-wrap {
+            border-radius: 0.75rem;
+            overflow: hidden;
+            background: #f8f9fa;
         }
     </style>
 </head>
 <body>
 
-    <div class="card info-card border-0 shadow-lg rounded-4 overflow-hidden my-3 bg-white position-relative">
+    <div class="card info-card border-0 shadow-sm rounded-4 overflow-hidden my-3 bg-white position-relative">
         <!-- Top Bar Header with Exit Button at top-right corner -->
         <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between">
             <span class="badge bg-primary-subtle text-primary text-uppercase fw-bold rounded-pill px-3 py-2 small">
@@ -41,16 +48,16 @@
             </span>
 
             <!-- Exit Button: if guest, prompts login first before entering inventory -->
-            <button type="button" id="btn-exit-inventory" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1 d-flex align-items-center gap-1" title="Return to Inventory">
-                <span>Exit</span>
+            <button type="button" id="btn-exit-inventory" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1 d-flex align-items-center gap-1" title="Return to Home or Inventory">
+                <span id="btn-exit-label">Home</span>
                 <i class="bi bi-box-arrow-right"></i>
             </button>
         </div>
 
         <div class="card-body p-4" id="main-content-body">
             <!-- Asset Photo Centered -->
-            <div class="text-center mb-4">
-                <img id="item-photo" src="picture/images.jpg" alt="" class="asset-img-preview border" onerror="this.src='picture/images.jpg'">
+            <div class="text-center mb-4 asset-photo-wrap">
+                <img id="item-photo" src="picture/images.jpg" alt="" class="asset-img-preview" onerror="this.src='picture/images.jpg'">
             </div>
 
             <!-- Title & ID -->
@@ -186,34 +193,35 @@
 
     <script type="module">
         import { auth, db, getCurrentUserRole } from './js/config.js';
+        import { normalizeTagId } from './js/tagId.js';
         import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
         // Parse Asset ID from URL query parameters (supports ?id=, ?ID=, ?tag=, ?asset= or embedded id=)
         const urlParams = new URLSearchParams(window.location.search);
         let rawId = urlParams.get('id') || urlParams.get('ID') || urlParams.get('tag') || urlParams.get('assetId') || urlParams.get('asset') || "";
-        if (rawId.includes('id=')) {
-            rawId = rawId.split('id=').pop().split('&')[0];
-        }
-        let assetId = decodeURIComponent(rawId).trim();
+        let assetId = normalizeTagId(decodeURIComponent(rawId));
         let currentAssetData = null;
         let campusFacilities = {};
 
-        // 1. EXIT BUTTON HANDLER
-        // If guest: prompts login first before redirecting to inventory
         document.getElementById('btn-exit-inventory')?.addEventListener('click', async () => {
-            const userEmail = sessionStorage.getItem('currentLoginEmail');
             let role = null;
             try {
                 role = await getCurrentUserRole();
             } catch (e) {}
 
-            if (userEmail || (role === 'staff' || role === 'student')) {
+            if (role === 'staff' || role === 'student') {
                 window.location.href = "inventory.php";
             } else {
-                alert("Please log in as a student or staff member to access the campus inventory.");
-                window.location.href = `login.php?redirect=${encodeURIComponent('inventory.php')}`;
+                window.location.href = "index.php";
             }
         });
+
+        getCurrentUserRole().then(role => {
+            const label = document.getElementById('btn-exit-label');
+            if (label && (role === 'staff' || role === 'student')) {
+                label.innerText = 'Inventory';
+            }
+        }).catch(() => {});
 
         // Load Utility Building/Room Options for Edit Dropdowns
         async function loadUtilityOptions() {
@@ -309,11 +317,9 @@
                     { fps: 10, qrbox: { width: 220, height: 220 } },
                     (decodedText) => {
                         qr.stop().then(() => {
-                            let cleanTag = decodedText.trim();
-                            if (cleanTag.includes('id=')) cleanTag = cleanTag.split('id=').pop().split('&')[0];
-                            window.location.href = `info.php?id=${encodeURIComponent(cleanTag)}`;
+                            window.location.href = `info.php?id=${encodeURIComponent(normalizeTagId(decodedText))}`;
                         }).catch(() => {
-                            window.location.href = `info.php?id=${encodeURIComponent(decodedText.trim())}`;
+                            window.location.href = `info.php?id=${encodeURIComponent(normalizeTagId(decodedText))}`;
                         });
                     },
                     () => {}
@@ -327,12 +333,12 @@
             } catch (e) {}
 
             document.getElementById('btn-manual-go')?.addEventListener('click', () => {
-                const val = document.getElementById('manual-tag-input').value.trim();
+                const val = normalizeTagId(document.getElementById('manual-tag-input').value);
                 if (val) window.location.href = `info.php?id=${encodeURIComponent(val)}`;
             });
             document.getElementById('manual-tag-input')?.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
-                    const val = document.getElementById('manual-tag-input').value.trim();
+                    const val = normalizeTagId(document.getElementById('manual-tag-input').value);
                     if (val) window.location.href = `info.php?id=${encodeURIComponent(val)}`;
                 }
             });
@@ -353,6 +359,9 @@
                     const allSnap = await getDocs(collection(db, "assets"));
                     allSnap.forEach(d => {
                         if (d.id.toLowerCase() === assetId.toLowerCase()) {
+                            foundAsset = d.data();
+                            canonicalId = d.id;
+                        } else if (!foundAsset && normalizeTagId(d.id).toLowerCase() === assetId.toLowerCase()) {
                             foundAsset = d.data();
                             canonicalId = d.id;
                         }

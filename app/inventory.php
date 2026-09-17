@@ -46,20 +46,14 @@
 
         <!-- Action Buttons -->
         <div id="staff-action-container" class="d-flex align-items-center gap-2 w-100 w-sm-auto justify-content-sm-end">
-            <!-- Scan Tag Button (Public lookup to info page) -->
-            <button id="btn-open-scan-lookup" type="button" onclick="startPublicQrScan()" class="btn btn-outline-primary btn-sm px-3 rounded-pill d-flex align-items-center justify-content-center gap-2 flex-fill flex-sm-grow-0" data-bs-toggle="modal" data-bs-target="#scanLookupModal">
-                <i class="bi bi-qr-code-scan"></i>
-                <span>Scan Tag</span>
-            </button>
-
-            <!-- Archived Toggle Button -->
-            <button id="toggle-archive-btn" onclick="toggleArchiveView()" class="btn btn-outline-secondary btn-sm px-3 rounded-pill d-flex align-items-center justify-content-center gap-2 flex-fill flex-sm-grow-0">
+            <!-- Archived Toggle Button (staff only) -->
+            <button id="toggle-archive-btn" onclick="toggleArchiveView()" class="btn btn-outline-secondary btn-sm px-3 rounded-pill d-flex align-items-center justify-content-center gap-2 flex-fill flex-sm-grow-0 d-none" data-staff-only>
                 <i class="bi bi-archive"></i>
                 <span id="archive-btn-text">Archived Assets</span>
             </button>
             
             <!-- Add Item Button -->
-            <button id="btn-open-add-modal" type="button" onclick="startAddAssetWorkflow()" class="btn btn-primary btn-sm px-3 rounded-pill d-flex align-items-center justify-content-center gap-2 fw-semibold flex-fill flex-sm-grow-0" data-bs-toggle="modal" data-bs-target="#addAssetModal">
+            <button id="btn-open-add-modal" type="button" onclick="startAddAssetWorkflow()" class="btn btn-primary btn-sm px-3 rounded-pill d-flex align-items-center justify-content-center gap-2 fw-semibold flex-fill flex-sm-grow-0 d-none" data-staff-only data-bs-toggle="modal" data-bs-target="#addAssetModal">
                 <i class="bi bi-plus-lg"></i>
                 <span>Add Asset</span>
             </button>
@@ -142,7 +136,7 @@
                         </label>
                         <div class="input-group">
                             <span class="input-group-text bg-white"><i class="bi bi-qr-code"></i></span>
-                            <input type="text" id="manual-qr-input" class="form-control" placeholder="e.g. ASSET-00123">
+                            <input type="text" id="manual-qr-input" class="form-control" placeholder="e.g. TARUMT-a00000002">
                             <button class="btn btn-outline-primary" type="button" id="btn-use-manual-qr">Use ID</button>
                         </div>
                     </div>
@@ -239,40 +233,11 @@
         </div>
 </div>
 
-<!-- Scan Asset Tag Lookup Modal (Accessible to any user / guest) -->
-<div class="modal fade" id="scanLookupModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0 shadow">
-            <div class="modal-header border-bottom px-4 py-3">
-                <h5 class="modal-title fw-bold text-dark d-flex align-items-center">
-                    <i class="bi bi-qr-code-scan text-primary me-2"></i>Scan Asset QR Tag
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="stopLookupScanner()"></button>
-            </div>
-            <div class="modal-body p-4">
-                <p class="text-muted small text-center mb-3">Point your camera at the physical QR tag on the asset to view its details.</p>
-                <div id="lookup-qr-reader" class="w-100 bg-dark rounded-3 overflow-hidden border mb-3 position-relative" style="min-height: 250px;"></div>
-                <div class="card bg-light border-0 p-3 rounded-3 mb-3">
-                    <label class="form-label small fw-semibold text-secondary mb-1">
-                        <i class="bi bi-keyboard me-1"></i>Or Enter Tag ID Manually:
-                    </label>
-                    <div class="input-group">
-                        <input type="text" id="manual-lookup-id" class="form-control" placeholder="e.g. TARUMT-a00000002">
-                        <button class="btn btn-primary" type="button" id="btn-go-lookup">View Asset</button>
-                    </div>
-                </div>
-                <button type="button" class="btn btn-light border w-100 rounded-pill py-2" data-bs-dismiss="modal" onclick="stopLookupScanner()">
-                    Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <?php include 'footer.php'; ?>
 
 <script type="module">
     import { db, storage } from './js/config.js';
+    import { normalizeTagId } from './js/tagId.js';
     import { doc, setDoc, updateDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
     import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-storage.js";
 
@@ -644,8 +609,14 @@
 
     async function onQrCodeScanned(decodedText) {
         await stopScanner();
-        document.getElementById('asset-qr-id').value = decodedText;
-        document.getElementById('scanned-tag-display').innerText = decodedText;
+        const tagId = normalizeTagId(decodedText);
+        if (!tagId) {
+            alert("Could not read a valid Tag ID from that QR code. Please try again or enter it manually.");
+            await initScanner();
+            return;
+        }
+        document.getElementById('asset-qr-id').value = tagId;
+        document.getElementById('scanned-tag-display').innerText = tagId;
         document.getElementById('modal-step-1').classList.add('d-none');
         document.getElementById('modal-step-2').classList.remove('d-none');
     }
@@ -683,7 +654,7 @@
        ==================================================== */
     document.getElementById('new-asset-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const assetId = document.getElementById('asset-qr-id').value.trim();
+        const assetId = normalizeTagId(document.getElementById('asset-qr-id').value);
         const fileInput = document.getElementById('asset-photo');
         const file = fileInput.files ? fileInput.files[0] : null;
 
@@ -778,6 +749,19 @@
             alert("Failed to save asset: " + err.message);
             submitBtn.innerText = "Save Asset";
             submitBtn.disabled = false;
+        }
+    });
+
+    window.addEventListener('userRoleReady', (e) => {
+        const isStaff = e.detail.role === 'staff';
+        document.querySelectorAll('[data-staff-only]').forEach(el => {
+            el.classList.toggle('d-none', !isStaff);
+            if (isStaff && el.id === 'toggle-archive-btn') {
+                el.classList.add('d-flex');
+            }
+        });
+        if (e.detail.role) {
+            renderItems();
         }
     });
 

@@ -82,7 +82,7 @@
                         <i class="bi bi-send-fill"></i>
                         <span>Submit Fault Report</span>
                     </button>
-                    <a id="btn-cancel-return" href="inventory.php" class="btn btn-outline-secondary rounded-pill py-2 small text-center">
+                    <a id="btn-cancel-return" href="index.php" class="btn btn-outline-secondary rounded-pill py-2 small text-center">
                         Cancel & Return
                     </a>
                 </div>

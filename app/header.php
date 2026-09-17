@@ -124,6 +124,12 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             </a>
         </div>
         <div class="d-flex align-items-center gap-2">
+            <?php if ($currentPage === 'index.php'): ?>
+            <button type="button" class="btn btn-primary btn-sm px-3 rounded-pill d-flex align-items-center gap-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#scanLookupModal" title="Scan asset QR tag">
+                <i class="bi bi-qr-code-scan"></i>
+                <span class="d-none d-sm-inline">Scan Tag</span>
+            </button>
+            <?php endif; ?>
             <span class="badge bg-secondary bg-opacity-25 text-light rounded-pill px-3 py-2 small d-none d-md-inline-block">
                 <i class="bi bi-check-circle-fill text-success me-1"></i>System Online
             </span>
@@ -151,31 +157,31 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 </a>
             </li>
             <li class="nav-item gemini-nav-item">
-                <a href="inventory.php" class="nav-link d-flex align-items-center <?= ($currentPage == 'inventory.php') ? 'active' : '' ?>">
+                <a href="inventory.php" class="nav-link d-flex align-items-center <?= ($currentPage == 'inventory.php') ? 'active' : '' ?>" data-requires-login data-href="inventory.php">
                     <i class="bi bi-collection me-3 fs-5"></i>
                     <span>Inventory</span>
                 </a>
             </li>
             <li class="nav-item gemini-nav-item">
-                <a href="maintenance.php" class="nav-link d-flex align-items-center <?= ($currentPage == 'maintenance.php' || $currentPage == 'report_detail.php') ? 'active' : '' ?>">
+                <a href="maintenance.php" class="nav-link d-flex align-items-center <?= ($currentPage == 'maintenance.php' || $currentPage == 'report_detail.php') ? 'active' : '' ?>" data-requires-login data-href="maintenance.php">
                     <i class="bi bi-tools me-3 fs-5"></i>
                     <span>Maintenance</span>
                 </a>
             </li>
-            <li class="nav-item gemini-nav-item">
-                <a href="financial.php" class="nav-link d-flex align-items-center <?= ($currentPage == 'financial.php') ? 'active' : '' ?>">
+            <li class="nav-item gemini-nav-item" data-nav-financial>
+                <a href="financial.php" class="nav-link d-flex align-items-center <?= ($currentPage == 'financial.php') ? 'active' : '' ?>" data-requires-login data-href="financial.php">
                     <i class="bi bi-cash-stack me-3 fs-5"></i>
                     <span>Financial</span>
                 </a>
             </li>
             <li class="nav-item gemini-nav-item">
-                <a href="utility.php" class="nav-link d-flex align-items-center <?= ($currentPage == 'utility.php') ? 'active' : '' ?>">
+                <a href="utility.php" class="nav-link d-flex align-items-center <?= ($currentPage == 'utility.php') ? 'active' : '' ?>" data-requires-login data-href="utility.php">
                     <i class="bi bi-building me-3 fs-5"></i>
                     <span>Utility</span>
                 </a>
             </li>
-            <li class="nav-item gemini-nav-item">
-                <a href="people.php" class="nav-link d-flex align-items-center <?= ($currentPage == 'people.php') ? 'active' : '' ?>">
+            <li class="nav-item gemini-nav-item" data-nav-people>
+                <a href="people.php" class="nav-link d-flex align-items-center <?= ($currentPage == 'people.php') ? 'active' : '' ?>" data-requires-login data-href="people.php">
                     <i class="bi bi-people me-3 fs-5"></i>
                     <span>People</span>
                 </a>

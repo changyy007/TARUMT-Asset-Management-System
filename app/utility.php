@@ -1,11 +1,18 @@
 <?php include 'header.php'; ?>
 
 <style>
+    .utility-list-card {
+        overflow: visible !important;
+    }
     .utility-row {
         background-color: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: 0.85rem;
         transition: all 0.2s ease;
+        overflow: visible;
+    }
+    .utility-row .dropdown-menu {
+        z-index: 1050;
     }
     .utility-row:hover {
         border-color: #cbd5e1;
@@ -38,7 +45,7 @@
         </div>
 
         <!-- Add Building Block Button -->
-        <div>
+        <div data-staff-only class="d-none">
             <button type="button" onclick="openAddBlockModal()" class="btn btn-primary btn-sm px-3 rounded-pill d-flex align-items-center gap-2 fw-semibold shadow-sm">
                 <i class="bi bi-plus-lg"></i>
                 <span>Add Building Block</span>
@@ -47,7 +54,7 @@
     </div>
 
     <!-- Line-by-Line List Container (Column structure: Building, Room, Actions) -->
-    <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white">
+    <div class="card border-0 shadow-sm rounded-4 p-3 p-md-4 bg-white utility-list-card">
         <!-- List Table Header -->
         <div class="row g-2 pb-2 mb-3 border-bottom text-uppercase text-secondary fw-bold small px-2 d-none d-md-flex">
             <div class="col-12 col-md-3">Building</div>
@@ -125,7 +132,7 @@
     import { collection, doc, getDocs, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
     let blocks = {};
-    let isStaff = true; // Enabled by default for campus management
+    let isStaff = false;
 
     const DEFAULT_BLOCKS = {
         "block-a": { name: "Block A", rooms: ["Room A-101", "Room A-102", "Room A-201", "Lab A-1"] },
@@ -190,14 +197,14 @@
                         <div class="room-pill shadow-xs">
                             <i class="bi bi-door-closed text-primary"></i>
                             <span class="fw-semibold text-dark">${roomName}</span>
-                            <div class="d-inline-flex gap-1 ms-1 border-start ps-1">
-                                <button type="button" class="btn btn-link text-secondary p-0" title="Rename Room" onclick="openRenameRoomModal('${blockId}', '${encodeURIComponent(roomName)}')">
+                            ${isStaff ? `<div class="d-inline-flex gap-1 ms-1 border-start ps-1">
+                                <button type="button" class="btn btn-link text-secondary p-0" title="Update Room" onclick="openRenameRoomModal('${blockId}', '${encodeURIComponent(roomName)}')">
                                     <i class="bi bi-pencil" style="font-size: 0.75rem;"></i>
                                 </button>
                                 <button type="button" class="btn btn-link text-danger p-0" title="Delete Room" onclick="deleteRoom('${blockId}', '${encodeURIComponent(roomName)}')">
                                     <i class="bi bi-x-circle" style="font-size: 0.75rem;"></i>
                                 </button>
-                            </div>
+                            </div>` : ''}
                         </div>
                     `;
                 });
@@ -230,27 +237,28 @@
 
                     <!-- Column 3: Actions -->
                     <div class="col-12 col-md-2 text-md-end d-flex align-items-center justify-content-md-end gap-2">
+                        ${isStaff ? `
                         <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1" onclick="openAddRoomModal('${blockId}')" title="Add Room">
                             <i class="bi bi-plus-lg me-1"></i>Add Room
                         </button>
                         <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary rounded-circle p-1 px-2" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="More Options">
+                            <button class="btn btn-sm btn-outline-secondary rounded-circle p-1 px-2" type="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" title="More Options">
                                 <i class="bi bi-three-dots-vertical"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
                                 <li>
-                                    <a class="dropdown-item small" href="javascript:void(0)" onclick="openRenameBlockModal('${blockId}', '${encodeURIComponent(blockName)}')">
-                                        <i class="bi bi-pencil me-2 text-primary"></i>Rename Building
-                                    </a>
+                                    <button type="button" class="dropdown-item small" onclick="openRenameBlockModal('${blockId}', '${encodeURIComponent(blockName)}')">
+                                        <i class="bi bi-pencil me-2 text-primary"></i>Update
+                                    </button>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
-                                    <a class="dropdown-item small text-danger" href="javascript:void(0)" onclick="deleteBlock('${blockId}', '${encodeURIComponent(blockName)}')">
-                                        <i class="bi bi-trash me-2"></i>Delete Building
-                                    </a>
+                                    <button type="button" class="dropdown-item small text-danger" onclick="deleteBlock('${blockId}', '${encodeURIComponent(blockName)}')">
+                                        <i class="bi bi-trash me-2"></i>Delete
+                                    </button>
                                 </li>
                             </ul>
-                        </div>
+                        </div>` : `<span class="text-muted small">View only</span>`}
                     </div>
                 </div>
             </div>`;
@@ -263,6 +271,7 @@
        BUILDING BLOCK CRUD
        ==================================================== */
     window.openAddBlockModal = () => {
+        if (!isStaff) return;
         document.getElementById('blockModalTitle').innerText = "Add Building Block";
         document.getElementById('block-mode').value = "add";
         document.getElementById('block-name').value = "";
@@ -271,6 +280,7 @@
     };
 
     window.openRenameBlockModal = (blockId, encName) => {
+        if (!isStaff) return;
         const name = decodeURIComponent(encName);
         document.getElementById('blockModalTitle').innerText = "Rename Building Block";
         document.getElementById('block-mode').value = "rename";
@@ -318,6 +328,7 @@
     });
 
     window.deleteBlock = async (blockId, encName) => {
+        if (!isStaff) return;
         const name = decodeURIComponent(encName);
         if (confirm(`Are you sure you want to delete "${name}" and all its rooms?`)) {
             try {
@@ -333,6 +344,7 @@
        ROOM CRUD
        ==================================================== */
     window.openAddRoomModal = (blockId) => {
+        if (!isStaff) return;
         document.getElementById('roomModalTitle').innerText = "Add Room to Block";
         document.getElementById('room-mode').value = "add";
         document.getElementById('room-block-id').value = blockId;
@@ -342,6 +354,7 @@
     };
 
     window.openRenameRoomModal = (blockId, encRoom) => {
+        if (!isStaff) return;
         const roomName = decodeURIComponent(encRoom);
         document.getElementById('roomModalTitle').innerText = "Rename Room";
         document.getElementById('room-mode').value = "rename";
@@ -394,6 +407,7 @@
     });
 
     window.deleteRoom = async (blockId, encRoom) => {
+        if (!isStaff) return;
         const roomName = decodeURIComponent(encRoom);
         if (confirm(`Are you sure you want to delete room "${roomName}"?`)) {
             try {
@@ -412,6 +426,13 @@
         }
     };
 
-    // Init
-    loadDirectory();
+    window.addEventListener('userRoleReady', async (e) => {
+        isStaff = e.detail.role === 'staff';
+        renderList();
+    });
+
+    getCurrentUserRole().then(role => {
+        isStaff = role === 'staff';
+        loadDirectory();
+    });
 </script>

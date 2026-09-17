@@ -19,6 +19,9 @@
             <p class="text-muted small mb-0">Monthly asset performance, incident tickets, and maintenance metrics.</p>
         </div>
         <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-primary btn-sm px-3 rounded-pill d-flex align-items-center gap-2 fw-semibold d-lg-none" data-bs-toggle="modal" data-bs-target="#scanLookupModal">
+                <i class="bi bi-qr-code-scan"></i> Scan Tag
+            </button>
             <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill small">
                 <i class="bi bi-calendar3 me-1 text-primary"></i>
                 <span id="current-month-display">Current Month</span>
@@ -45,7 +48,7 @@
         <!-- 1. Total Assets Added This Month -> Clickable to inventory.php -->
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="card stat-card border-0 shadow-sm rounded-4 h-100 p-3 bg-white position-relative overflow-hidden" 
-                 onclick="window.location.href='inventory.php'" title="Click to view Campus Inventory">
+                 data-module-link="inventory.php" title="Click to view Campus Inventory">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <div class="text-secondary text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Assets Added</div>
@@ -66,7 +69,7 @@
         <!-- 2. Total Reports This Month -> Clickable to maintenance.php -->
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="card stat-card border-0 shadow-sm rounded-4 h-100 p-3 bg-white position-relative overflow-hidden" 
-                 onclick="window.location.href='maintenance.php'" title="Click to view Maintenance Tickets">
+                 data-module-link="maintenance.php" title="Click to view Maintenance Tickets">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <div class="text-secondary text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Reports Filed</div>
@@ -87,7 +90,7 @@
         <!-- 3. Pending Maintenance -> Clickable to maintenance.php -->
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="card stat-card border-0 shadow-sm rounded-4 h-100 p-3 bg-white position-relative overflow-hidden" 
-                 onclick="window.location.href='maintenance.php'" title="Click to view Pending Repairs">
+                 data-module-link="maintenance.php" title="Click to view Pending Repairs">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <div class="text-secondary text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Pending Repairs</div>
@@ -108,7 +111,7 @@
         <!-- 4. Maintenance Cost -> Clickable to financial.php -->
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="card stat-card border-0 shadow-sm rounded-4 h-100 p-3 bg-white position-relative overflow-hidden" 
-                 onclick="window.location.href='financial.php'" title="Click to view Financial Reports">
+                 data-module-link="financial.php" title="Click to view Financial Reports">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <div class="text-secondary text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Maintenance Cost</div>
@@ -169,11 +172,34 @@ service cloud.firestore {
     </div>
 </div>
 
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<?php include 'partials/scan_lookup_modal.php'; ?>
+
 <?php include 'footer.php'; ?>
 
 <script type="module">
     import { db } from './js/config.js';
+    import { initScanLookupModal } from './js/scanLookup.js';
     import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+
+    initScanLookupModal();
+
+    function navigateModule(dest) {
+        const role = window.currentUserRole;
+        if (!role) {
+            window.location.href = `login.php?redirect=${encodeURIComponent(dest)}`;
+            return;
+        }
+        if (role === 'student' && dest === 'financial.php') {
+            alert('Financial reports are restricted to staff accounts.');
+            return;
+        }
+        window.location.href = dest;
+    }
+
+    document.querySelectorAll('[data-module-link]').forEach(card => {
+        card.addEventListener('click', () => navigateModule(card.dataset.moduleLink));
+    });
 
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     const now = new Date();
