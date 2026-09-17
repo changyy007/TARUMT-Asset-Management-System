@@ -5,16 +5,20 @@
 
 <style>
     .asset-card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
         cursor: pointer;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 0.75rem !important;
+        box-shadow: none !important;
     }
     .asset-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1) !important;
+        transform: translateY(-3px);
+        border-color: #0d6efd !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06) !important;
     }
     .maintenance-dot {
-        width: 14px;
-        height: 14px;
+        width: 12px;
+        height: 12px;
         background-color: #dc3545;
         border: 2px solid #ffffff;
         border-radius: 50%;
@@ -22,14 +26,8 @@
         top: 10px;
         left: 10px;
         z-index: 10;
-        box-shadow: 0 0 8px rgba(220, 53, 69, 0.8);
-        animation: pulse-red 1.8s infinite;
         pointer-events: none;
-    }
-    @keyframes pulse-red {
-        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
-        70% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(220, 53, 69, 0); }
-        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        box-shadow: none !important;
     }
 </style>
 
@@ -46,8 +44,14 @@
             <p class="text-muted small mb-0">Browse university assets, check operational status, and manage inventory.</p>
         </div>
 
-        <!-- Action Buttons: Always visible to staff & authorized users -->
+        <!-- Action Buttons -->
         <div id="staff-action-container" class="d-flex align-items-center gap-2 w-100 w-sm-auto justify-content-sm-end">
+            <!-- Scan Tag Button (Public lookup to info page) -->
+            <button id="btn-open-scan-lookup" type="button" onclick="startPublicQrScan()" class="btn btn-outline-primary btn-sm px-3 rounded-pill d-flex align-items-center justify-content-center gap-2 flex-fill flex-sm-grow-0" data-bs-toggle="modal" data-bs-target="#scanLookupModal">
+                <i class="bi bi-qr-code-scan"></i>
+                <span>Scan Tag</span>
+            </button>
+
             <!-- Archived Toggle Button -->
             <button id="toggle-archive-btn" onclick="toggleArchiveView()" class="btn btn-outline-secondary btn-sm px-3 rounded-pill d-flex align-items-center justify-content-center gap-2 flex-fill flex-sm-grow-0">
                 <i class="bi bi-archive"></i>
@@ -231,6 +235,35 @@
                         </div>
                     </form>
                 </div>
+            </div>
+        </div>
+</div>
+
+<!-- Scan Asset Tag Lookup Modal (Accessible to any user / guest) -->
+<div class="modal fade" id="scanLookupModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom px-4 py-3">
+                <h5 class="modal-title fw-bold text-dark d-flex align-items-center">
+                    <i class="bi bi-qr-code-scan text-primary me-2"></i>Scan Asset QR Tag
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="stopLookupScanner()"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small text-center mb-3">Point your camera at the physical QR tag on the asset to view its details.</p>
+                <div id="lookup-qr-reader" class="w-100 bg-dark rounded-3 overflow-hidden border mb-3 position-relative" style="min-height: 250px;"></div>
+                <div class="card bg-light border-0 p-3 rounded-3 mb-3">
+                    <label class="form-label small fw-semibold text-secondary mb-1">
+                        <i class="bi bi-keyboard me-1"></i>Or Enter Tag ID Manually:
+                    </label>
+                    <div class="input-group">
+                        <input type="text" id="manual-lookup-id" class="form-control" placeholder="e.g. TARUMT-a00000002">
+                        <button class="btn btn-primary" type="button" id="btn-go-lookup">View Asset</button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-light border w-100 rounded-pill py-2" data-bs-dismiss="modal" onclick="stopLookupScanner()">
+                    Cancel
+                </button>
             </div>
         </div>
     </div>

@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TARUMT Asset Management - Sign In</title>
-    <!-- Bootstrap 5.3.0 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <style>
@@ -17,10 +16,7 @@
             padding: 1.5rem 1rem;
             font-family: system-ui, -apple-system, sans-serif;
         }
-        .login-card {
-            max-width: 420px;
-            width: 100%;
-        }
+        .login-card { max-width: 420px; width: 100%; }
         .form-control:focus {
             border-color: #0d6efd;
             box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
@@ -30,60 +26,72 @@
 <body>
 
     <div class="card login-card border-0 shadow-lg rounded-4 p-4 p-sm-5 bg-white">
+
         <!-- Logo & Header -->
         <div class="text-center mb-4">
             <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3" style="width: 60px; height: 60px;">
                 <i class="bi bi-shield-lock-fill fs-2"></i>
             </div>
             <h2 class="h4 fw-bold text-dark mb-1">TARUMT Sign In</h2>
-            <p class="text-muted small mb-0">Enter your Login ID and password to access</p>
+            <p class="text-muted small mb-0">Enter your Student / Staff ID and password</p>
         </div>
 
-        <!-- Inactivity Alert -->
+        <!-- Inactivity timeout alert -->
         <div id="timeout-alert" class="alert alert-warning py-2 px-3 small rounded-3 d-none mb-3 text-center" role="alert">
             <i class="bi bi-clock-history me-1"></i> You have been logged out due to 15 minutes of inactivity.
         </div>
 
-        <!-- Errors -->
+        <!-- Error / Permission alerts -->
         <div id="login-error" class="alert alert-danger py-2 px-3 small rounded-3 d-none mb-3" role="alert"></div>
         <div id="permission-denied-message" class="alert alert-warning py-2 px-3 small rounded-3 d-none mb-3 text-center" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-1"></i>
             <strong>You do not have permission to login.</strong>
         </div>
 
-        <!-- Sign In Form: ONLY Login ID & Password -->
-        <form id="login-form">
+        <!-- Sign-In Form -->
+        <form id="login-form" onsubmit="return false;">
             <div class="mb-3">
-                <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Login ID</label>
+                <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Student / Staff ID</label>
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0"><i class="bi bi-person-badge text-muted"></i></span>
-                    <input type="text" id="login-id-input" required placeholder="e.g. 23WMD01234 or STF-001" class="form-control border-start-0 ps-0">
+                    <input type="text" id="login-id-input" required
+                           placeholder="e.g. 2410848 or STF-001"
+                           class="form-control border-start-0 ps-0" autocomplete="username">
                 </div>
             </div>
-            
+
             <div class="mb-4">
                 <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Password</label>
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
-                    <input type="password" id="password-input" required placeholder="••••••••" class="form-control border-start-0 ps-0">
+                    <input type="password" id="password-input" required
+                           placeholder="••••••••"
+                           class="form-control border-start-0 ps-0" autocomplete="current-password">
+                    <button class="btn btn-outline-secondary border-start-0" type="button" id="toggle-password" tabindex="-1">
+                        <i class="bi bi-eye" id="eye-icon"></i>
+                    </button>
                 </div>
             </div>
-            
-            <button type="submit" id="btn-login-submit" class="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
+
+            <button type="submit" id="btn-login-submit"
+                    class="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
                 <span>Sign In</span>
                 <i class="bi bi-box-arrow-in-right"></i>
             </button>
-            
-            <!-- Forgot Password link placed directly below login button as requested -->
+
+            <!-- Forgot Password link -->
             <div class="text-center mt-3">
-                <a href="javascript:void(0)" onclick="openForgotPasswordModal()" class="text-primary text-decoration-none small fw-semibold">
+                <a href="javascript:void(0)" id="btn-forgot-password"
+                   class="text-primary text-decoration-none small fw-semibold">
                     <i class="bi bi-question-circle me-1"></i>Forgot Password?
                 </a>
             </div>
         </form>
     </div>
 
-    <!-- Forgot Password Modal -->
+    <!-- ============================================================
+         FORGOT PASSWORD MODAL
+         ============================================================ -->
     <div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 border-0 shadow">
@@ -94,59 +102,20 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <div id="fp-alert" class="alert py-2 px-3 small rounded-3 d-none mb-3"></div>
-
-                    <!-- STEP 1: Enter Gmail Account -->
-                    <div id="fp-step-1">
-                        <p class="small text-muted mb-3">
-                            Enter your registered Gmail account. We will send a 6-digit randomly generated verification code to your email.
-                        </p>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Gmail Account</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light"><i class="bi bi-envelope text-muted"></i></span>
-                                <input type="email" id="fp-email" class="form-control" placeholder="user@gmail.com" required>
-                            </div>
+                    <p class="small text-muted mb-3">
+                        Enter your registered email address. We will send a secure password reset link to your email inbox.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Registered Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-envelope text-muted"></i></span>
+                            <input type="email" id="fp-email" class="form-control"
+                                   placeholder="e.g. user@gmail.com" autocomplete="email">
                         </div>
-                        <button type="button" id="btn-send-code" class="btn btn-primary w-100 rounded-pill fw-semibold py-2">
-                            Send Verification Code
-                        </button>
                     </div>
-
-                    <!-- STEP 2: Enter 6-Digit Code -->
-                    <div id="fp-step-2" class="d-none">
-                        <p class="small text-muted mb-3">
-                            A 6-digit verification code has been sent to <strong id="fp-target-email" class="text-dark"></strong>. Please enter the code below:
-                        </p>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-secondary text-uppercase mb-1">6-Digit Code</label>
-                            <input type="text" id="fp-code" maxlength="6" class="form-control text-center font-monospace fs-4 fw-bold letter-spacing-2" placeholder="••••••" required>
-                        </div>
-                        <button type="button" id="btn-verify-code" class="btn btn-primary w-100 rounded-pill fw-semibold py-2 mb-2">
-                            Verify Code
-                        </button>
-                        <button type="button" class="btn btn-link w-100 small text-decoration-none text-secondary" onclick="resendCode()">
-                            Did not receive code? Resend
-                        </button>
-                    </div>
-
-                    <!-- STEP 3: Enter New Password -->
-                    <div id="fp-step-3" class="d-none">
-                        <p class="small text-muted mb-3">
-                            Verification successful! Please enter your new password.
-                        </p>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-secondary text-uppercase mb-1">New Password</label>
-                            <input type="password" id="fp-new-password" class="form-control" placeholder="••••••••" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Confirm New Password</label>
-                            <input type="password" id="fp-confirm-password" class="form-control" placeholder="••••••••" required>
-                        </div>
-                        <button type="button" id="btn-save-new-password" class="btn btn-success w-100 rounded-pill fw-bold py-2">
-                            Update Password
-                        </button>
-                    </div>
+                    <button type="button" id="btn-send-reset" class="btn btn-primary w-100 rounded-pill fw-semibold py-2">
+                        <i class="bi bi-send me-1"></i>Send Reset Link
+                    </button>
                 </div>
             </div>
         </div>
@@ -157,22 +126,46 @@
 
     <script type="module">
         import { auth, db } from './js/config.js';
-        import { signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
-        import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+        import {
+            signInWithEmailAndPassword,
+            createUserWithEmailAndPassword,
+            sendPasswordResetEmail,
+            signOut
+        } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+        import {
+            collection, query, where, getDocs, doc, getDoc
+        } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
         const urlParams = new URLSearchParams(window.location.search);
         const redirectUrl = urlParams.get('redirect') ? decodeURIComponent(urlParams.get('redirect')) : "index.php";
 
-        // Check timeout
+        // Show inactivity timeout banner if redirected here by auth.js
         if (urlParams.has('timeout')) {
-            document.getElementById('timeout-alert').classList.remove('d-none');
+            document.getElementById('timeout-alert')?.classList.remove('d-none');
         }
 
-        /* ====================================================
-           1. LOGIN WITH LOGIN ID & PASSWORD
-           ==================================================== */
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
+        /* ============================================================
+           PASSWORD TOGGLE
+           ============================================================ */
+        document.getElementById('toggle-password')?.addEventListener('click', () => {
+            const input = document.getElementById('password-input');
+            const icon = document.getElementById('eye-icon');
+            if (!input || !icon) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'bi bi-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'bi bi-eye';
+            }
+        });
+
+        /* ============================================================
+           1. LOGIN WITH STUDENT / STAFF ID + PASSWORD
+           ============================================================ */
+        document.getElementById('login-form')?.addEventListener('submit', async (e) => {
             e.preventDefault();
+
             const loginId = document.getElementById('login-id-input').value.trim();
             const password = document.getElementById('password-input').value;
             const errDiv = document.getElementById('login-error');
@@ -185,72 +178,88 @@
             submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Authenticating...`;
 
             try {
-                // 1. Look up email by loginId in Firestore users collection
                 let targetEmail = "";
                 let userRole = "";
+                let canonicalLoginId = loginId;
 
-                try {
-                    // Check by loginId or studentId
-                    let q = query(collection(db, "users"), where("loginId", "==", loginId));
-                    let snap = await getDocs(q);
-                    if (snap.empty) {
-                        q = query(collection(db, "users"), where("studentId", "==", loginId));
-                        snap = await getDocs(q);
-                    }
-                    if (!snap.empty) {
-                        const uData = snap.docs[0].data();
-                        targetEmail = uData.email || "";
-                        userRole = (uData.role || "").toLowerCase();
-                    }
-                } catch (lookupErr) {
-                    console.warn("User directory lookup note:", lookupErr);
+                // 1. Look up user by string loginId
+                let snap = await getDocs(query(collection(db, "users"), where("loginId", "==", loginId)));
+
+                // 2. Try integer loginId if input is numeric
+                if (snap.empty && /^\d+$/.test(loginId)) {
+                    snap = await getDocs(query(collection(db, "users"), where("loginId", "==", parseInt(loginId, 10))));
                 }
 
-                // If user entered email directly, or fallback mapping
-                if (!targetEmail) {
-                    if (loginId.includes('@')) {
-                        targetEmail = loginId;
+                // 3. Try matching direct document ID (e.g. "stf-001" or "2410849")
+                if (snap.empty) {
+                    const slugId = loginId.toLowerCase().replace(/[^a-z0-9]/g, '-');
+                    const directDoc = await getDoc(doc(db, "users", slugId));
+                    if (directDoc.exists()) {
+                        const d = directDoc.data();
+                        targetEmail = d.email || "";
+                        userRole = (d.role || "student").toLowerCase();
+                        canonicalLoginId = String(d.loginId || loginId);
                     } else {
-                        targetEmail = `${loginId.toLowerCase()}@tarumt.edu.my`;
+                        const directDocRaw = await getDoc(doc(db, "users", loginId));
+                        if (directDocRaw.exists()) {
+                            const d = directDocRaw.data();
+                            targetEmail = d.email || "";
+                            userRole = (d.role || "student").toLowerCase();
+                            canonicalLoginId = String(d.loginId || loginId);
+                        }
                     }
                 }
 
-                // 2. Sign in with Firebase Auth
-                let userCred = null;
+                // 4. If user entered email directly as ID
+                if (snap.empty && !targetEmail && loginId.includes('@')) {
+                    snap = await getDocs(query(collection(db, "users"), where("email", "==", loginId.toLowerCase())));
+                }
+
+                // 5. Legacy studentId field lookup fallback
+                if (snap.empty && !targetEmail) {
+                    snap = await getDocs(query(collection(db, "users"), where("studentId", "==", loginId)));
+                }
+
+                if (!snap.empty && !targetEmail) {
+                    const d = snap.docs[0].data();
+                    targetEmail = d.email || "";
+                    userRole = (d.role || "student").toLowerCase();
+                    canonicalLoginId = String(d.loginId || d.studentId || loginId);
+                }
+
+                if (!targetEmail) {
+                    throw new Error(`No account found with ID "${loginId}". Please check your Student / Staff ID.`);
+                }
+
+                // Authenticate with Firebase Auth
+                let userCred;
                 try {
                     userCred = await signInWithEmailAndPassword(auth, targetEmail, password);
-                } catch (firstAuthErr) {
-                    // Fallback to student email format
-                    if (!loginId.includes('@')) {
-                        const fallbackEmail = `${loginId.toLowerCase()}@student.tarumt.edu.my`;
-                        userCred = await signInWithEmailAndPassword(auth, fallbackEmail, password);
-                    } else {
-                        throw firstAuthErr;
-                    }
-                }
+                } catch (authErr) {
+                    console.warn("Auth sign-in note:", authErr.code, authErr.message);
 
-                const user = userCred.user;
-
-                // 3. Verify user role is either staff or student
-                if (!userRole) {
-                    try {
-                        const uDoc = await getDoc(doc(db, "users", user.uid));
-                        if (uDoc.exists() && uDoc.data().role) {
-                            userRole = uDoc.data().role.toLowerCase();
-                        } else {
-                            const q = query(collection(db, "users"), where("email", "==", user.email));
-                            const snap = await getDocs(q);
-                            if (!snap.empty && snap.docs[0].data().role) {
-                                userRole = snap.docs[0].data().role.toLowerCase();
-                            } else {
-                                userRole = (user.email && (user.email.includes("admin") || user.email.includes("staff"))) ? "staff" : "student";
+                    // If default password "000000" and user not yet created in Auth, auto-create
+                    if (password === "000000" && (authErr.code === "auth/user-not-found" || authErr.code === "auth/invalid-credential")) {
+                        try {
+                            userCred = await createUserWithEmailAndPassword(auth, targetEmail, "000000");
+                        } catch (createErr) {
+                            if (createErr.code === "auth/email-already-in-use") {
+                                throw new Error("Incorrect password. If you reset your password recently, please enter your new password.");
                             }
+                            throw createErr;
                         }
-                    } catch (re) {
-                        userRole = "staff"; // Fallback to avoid lockout
+                    } else if (authErr.code === "auth/wrong-password" || authErr.code === "auth/invalid-credential") {
+                        throw new Error("Incorrect password. Please try again, or use 'Forgot Password?' below.");
+                    } else if (authErr.code === "auth/user-not-found") {
+                        throw new Error("No Auth account found for this user. Please contact administrator.");
+                    } else if (authErr.code === "auth/too-many-requests") {
+                        throw new Error("Too many failed attempts. Please wait a few minutes before trying again.");
+                    } else {
+                        throw new Error(authErr.message || "Failed to sign in. Please check your credentials.");
                     }
                 }
 
+                // Verify user role
                 if (userRole !== "student" && userRole !== "staff") {
                     await signOut(auth);
                     permDiv.classList.remove('d-none');
@@ -259,170 +268,74 @@
                     return;
                 }
 
-                // Successful login
+                // Persist login details for instant sidebar display (no async wait flash)
+                sessionStorage.setItem('currentLoginEmail', targetEmail);
+                sessionStorage.setItem('currentLoginId', canonicalLoginId);
+
+                // Redirect
                 window.location.href = redirectUrl;
 
             } catch (err) {
                 console.error("Login error:", err);
-                errDiv.innerText = err.message || "Failed to authenticate. Please check Login ID and password.";
+                errDiv.innerText = err.message || "Failed to sign in. Please check your ID and password.";
                 errDiv.classList.remove('d-none');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = `<span>Sign In</span> <i class="bi bi-box-arrow-in-right"></i>`;
             }
         });
 
-        /* ====================================================
-           2. FORGOT PASSWORD WORKFLOW (6-DIGIT CODE)
-           ==================================================== */
-        window.openForgotPasswordModal = () => {
-            document.getElementById('fp-step-1').classList.remove('d-none');
-            document.getElementById('fp-step-2').classList.add('d-none');
-            document.getElementById('fp-step-3').classList.add('d-none');
-            const alertBox = document.getElementById('fp-alert');
-            alertBox.classList.add('d-none');
-            document.getElementById('fp-email').value = "";
-            document.getElementById('fp-code').value = "";
-            const modal = new bootstrap.Modal(document.getElementById('forgotPasswordModal'));
-            modal.show();
-        };
-
-        let currentResetEmail = "";
-
-        // Send 6-Digit Code
-        document.getElementById('btn-send-code').addEventListener('click', async () => {
-            const email = document.getElementById('fp-email').value.trim();
-            const alertBox = document.getElementById('fp-alert');
-            const btn = document.getElementById('btn-send-code');
-
+        /* ============================================================
+           2. FORGOT PASSWORD — handlePasswordReset(email)
+           ============================================================ */
+        async function handlePasswordReset(email) {
             if (!email || !email.includes('@')) {
-                alertBox.className = "alert alert-danger py-2 px-3 small rounded-3 mb-3";
-                alertBox.innerText = "Please enter a valid Gmail address.";
-                alertBox.classList.remove('d-none');
+                alert("Please enter a valid email address.");
                 return;
             }
-
-            btn.disabled = true;
-            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Sending code...`;
-
             try {
-                const res = await fetch('api/send_reset_code.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-                const data = await res.json();
-
-                if (data.success) {
-                    currentResetEmail = email;
-                    document.getElementById('fp-target-email').innerText = email;
-                    document.getElementById('fp-step-1').classList.add('d-none');
-                    document.getElementById('fp-step-2').classList.remove('d-none');
-
-                    alertBox.className = "alert alert-success py-2 px-3 small rounded-3 mb-3";
-                    alertBox.innerHTML = `6-digit verification code sent to <strong>${email}</strong>!${data.dev_code ? ` <br><span class="badge bg-dark mt-1">Dev Code: ${data.dev_code}</span>` : ''}`;
-                    alertBox.classList.remove('d-none');
+                await sendPasswordResetEmail(auth, email);
+                alert("Password reset email sent! Please check your inbox (and spam folder).");
+                const modalEl = document.getElementById('forgotPasswordModal');
+                const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                modal.hide();
+            } catch (error) {
+                const errorCode = error.code;
+                if (errorCode === 'auth/user-not-found') {
+                    alert("No user found with this email address.");
+                } else if (errorCode === 'auth/invalid-email') {
+                    alert("Please enter a valid email address.");
+                } else if (errorCode === 'auth/too-many-requests') {
+                    alert("Too many requests. Please wait a few minutes before trying again.");
                 } else {
-                    alertBox.className = "alert alert-danger py-2 px-3 small rounded-3 mb-3";
-                    alertBox.innerText = data.message || "Failed to send code.";
-                    alertBox.classList.remove('d-none');
+                    alert(`An error occurred: ${error.message}`);
                 }
-            } catch (err) {
-                alertBox.className = "alert alert-danger py-2 px-3 small rounded-3 mb-3";
-                alertBox.innerText = "Network error while sending verification code.";
-                alertBox.classList.remove('d-none');
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Send Verification Code";
             }
+        }
+
+        // Link handlePasswordReset to Forgot Password button
+        document.getElementById('btn-forgot-password')?.addEventListener('click', () => {
+            const emailInput = document.getElementById('fp-email');
+            if (emailInput) emailInput.value = "";
+            const modalEl = document.getElementById('forgotPasswordModal');
+            const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modal.show();
         });
 
-        window.resendCode = () => {
-            document.getElementById('btn-send-code').click();
-        };
-
-        // Verify 6-Digit Code
-        document.getElementById('btn-verify-code').addEventListener('click', async () => {
-            const code = document.getElementById('fp-code').value.trim();
-            const alertBox = document.getElementById('fp-alert');
-            const btn = document.getElementById('btn-verify-code');
-
-            if (code.length !== 6) {
-                alertBox.className = "alert alert-danger py-2 px-3 small rounded-3 mb-3";
-                alertBox.innerText = "Please enter the 6-digit verification code.";
-                alertBox.classList.remove('d-none');
-                return;
-            }
-
+        document.getElementById('btn-send-reset')?.addEventListener('click', async () => {
+            const email = document.getElementById('fp-email').value.trim();
+            const btn = document.getElementById('btn-send-reset');
             btn.disabled = true;
-            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Verifying...`;
-
-            try {
-                const res = await fetch('api/verify_reset_code.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: currentResetEmail, code })
-                });
-                const data = await res.json();
-
-                if (data.success) {
-                    document.getElementById('fp-step-2').classList.add('d-none');
-                    document.getElementById('fp-step-3').classList.remove('d-none');
-
-                    alertBox.className = "alert alert-success py-2 px-3 small rounded-3 mb-3";
-                    alertBox.innerText = "Code verified! Please set your new password.";
-                    alertBox.classList.remove('d-none');
-                } else {
-                    alertBox.className = "alert alert-danger py-2 px-3 small rounded-3 mb-3";
-                    alertBox.innerText = data.message || "Invalid code.";
-                    alertBox.classList.remove('d-none');
-                }
-            } catch (err) {
-                alertBox.className = "alert alert-danger py-2 px-3 small rounded-3 mb-3";
-                alertBox.innerText = "Network error verifying code.";
-                alertBox.classList.remove('d-none');
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Verify Code";
-            }
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Sending...`;
+            await handlePasswordReset(email);
+            btn.disabled = false;
+            btn.innerHTML = `<i class="bi bi-send me-1"></i>Send Reset Link`;
         });
 
-        // Set New Password
-        document.getElementById('btn-save-new-password').addEventListener('click', async () => {
-            const newPass = document.getElementById('fp-new-password').value;
-            const confirmPass = document.getElementById('fp-confirm-password').value;
-            const alertBox = document.getElementById('fp-alert');
-            const btn = document.getElementById('btn-save-new-password');
-
-            if (newPass.length < 6) {
-                alertBox.className = "alert alert-danger py-2 px-3 small rounded-3 mb-3";
-                alertBox.innerText = "Password must be at least 6 characters.";
-                alertBox.classList.remove('d-none');
-                return;
-            }
-
-            if (newPass !== confirmPass) {
-                alertBox.className = "alert alert-danger py-2 px-3 small rounded-3 mb-3";
-                alertBox.innerText = "Passwords do not match.";
-                alertBox.classList.remove('d-none');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Updating...`;
-
-            try {
-                // Send Firebase password reset confirmation or email dispatch
-                await sendPasswordResetEmail(auth, currentResetEmail);
-                alert("Password reset verified! A direct secure confirmation link has also been dispatched to your email.\n\nYou may now sign in with your updated credentials.");
-                const modal = bootstrap.Modal.getInstance(document.getElementById('forgotPasswordModal'));
-                if (modal) modal.hide();
-            } catch (err) {
-                alertBox.className = "alert alert-danger py-2 px-3 small rounded-3 mb-3";
-                alertBox.innerText = "Error completing password reset: " + err.message;
-                alertBox.classList.remove('d-none');
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Update Password";
+        // Allow pressing Enter key on email field in modal
+        document.getElementById('fp-email')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('btn-send-reset')?.click();
             }
         });
     </script>

@@ -13,12 +13,13 @@ export const firebaseConfig = {
   measurementId: "G-D645QJSQ51"
 };
 
+// Singleton — avoids "Firebase App named '[DEFAULT]' already exists" error
 export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-export const db = getFirestore(app);
+export const db  = getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 
-// Enforce session-only persistence so closing the window logs the user out
+// Enforce session-only persistence so closing the browser window logs the user out
 try {
   setPersistence(auth, browserSessionPersistence);
 } catch (e) {
@@ -26,47 +27,31 @@ try {
 }
 
 // Make configs globally accessible if needed by non-module scripts
-window.firebaseConfig = firebaseConfig;
-window.firebaseApp = app;
-window.firebaseDb = db;
-window.firebaseAuth = auth;
+window.firebaseConfig  = firebaseConfig;
+window.firebaseApp     = app;
+window.firebaseDb      = db;
+window.firebaseAuth    = auth;
 window.firebaseStorage = storage;
 
 // Role checking helper
 export async function getCurrentUserRole() {
   return new Promise((resolve) => {
     onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        resolve(null);
-        return;
-      }
+      if (!user) { resolve(null); return; }
       try {
-        // 1. Check users doc by UID
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists() && userDoc.data().role) {
-          resolve(userDoc.data().role.toLowerCase());
-          return;
+          resolve(userDoc.data().role.toLowerCase()); return;
         }
-        // 2. Check users collection by email
         const q = query(collection(db, "users"), where("email", "==", user.email));
         const snap = await getDocs(q);
         if (!snap.empty && snap.docs[0].data().role) {
-          resolve(snap.docs[0].data().role.toLowerCase());
-          return;
+          resolve(snap.docs[0].data().role.toLowerCase()); return;
         }
-        // 3. Fallback: email hint or default to staff if admin
-        if (user.email && (user.email.includes("admin") || user.email.includes("staff"))) {
-          resolve("staff");
-        } else {
-          resolve("student");
-        }
+        resolve("staff");
       } catch (e) {
-        console.warn("Could not fetch user role from Firestore:", e);
-        if (user.email && (user.email.includes("admin") || user.email.includes("staff"))) {
-          resolve("staff");
-        } else {
-          resolve("staff"); // Default to staff during development so features aren't blocked
-        }
+        console.warn("Could not fetch user role:", e);
+        resolve("staff");
       }
     });
   });

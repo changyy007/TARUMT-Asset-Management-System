@@ -7,6 +7,8 @@
     <!-- Bootstrap 5.3.0 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <!-- HTML5 QR Code Library for on-page scanner -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         body {
             background-color: #f4f6f9;
@@ -38,7 +40,7 @@
                 <i class="bi bi-box-seam me-1"></i>TARUMT Campus Asset
             </span>
 
-            <!-- Exit Button at right-upper corner -->
+            <!-- Exit Button: if guest, prompts login first before entering inventory -->
             <button type="button" id="btn-exit-inventory" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1 d-flex align-items-center gap-1" title="Return to Inventory">
                 <span>Exit</span>
                 <i class="bi bi-box-arrow-right"></i>
@@ -46,9 +48,9 @@
         </div>
 
         <div class="card-body p-4" id="main-content-body">
-            <!-- Asset Photo Centered (QR Code removed as requested) -->
+            <!-- Asset Photo Centered -->
             <div class="text-center mb-4">
-                <img id="item-photo" src="picture/images.jpg" alt="" class="asset-img-preview shadow-sm border" onerror="this.src='picture/images.jpg'">
+                <img id="item-photo" src="picture/images.jpg" alt="" class="asset-img-preview border" onerror="this.src='picture/images.jpg'">
             </div>
 
             <!-- Title & ID -->
@@ -57,7 +59,7 @@
                 <div class="text-muted small font-monospace" id="item-id">Tag ID: -</div>
             </div>
 
-            <!-- Detailed Specifications List (Operational Status removed as requested) -->
+            <!-- Detailed Specifications List -->
             <div class="list-group list-group-flush rounded-3 border mb-4">
                 <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
                     <span class="text-muted small fw-semibold"><i class="bi bi-tag me-2 text-primary"></i>Category</span>
@@ -67,7 +69,7 @@
                     <span class="text-muted small fw-semibold"><i class="bi bi-geo-alt me-2 text-danger"></i>Location</span>
                     <span id="item-loc" class="fw-bold text-dark small">-</span>
                 </div>
-                <!-- Price: HIDDEN FROM STUDENTS & GUESTS -->
+                <!-- Price: HIDDEN FROM STUDENTS & GUESTS (Staff only) -->
                 <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-3 d-none" id="price-row">
                     <span class="text-muted small fw-semibold"><i class="bi bi-cash me-2 text-success"></i>Price</span>
                     <span id="item-price" class="fw-bold text-success small">-</span>
@@ -94,21 +96,18 @@
                 </div>
             </div>
 
-            <!-- Action Buttons Area: 3 buttons (Archive, Update, Report) -->
+            <!-- Action Buttons Area -->
             <div class="d-flex flex-column gap-2" id="actions-container">
-                <!-- 1. Report Broken Item (Visible to Staff, Student, Guest) -->
+                <!-- 1. Report Broken Item (Accessible to Staff, Student, Guest) -->
                 <a id="report-link" href="#" class="btn btn-danger rounded-pill py-2 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm">
                     <i class="bi bi-exclamation-triangle-fill"></i> Report Broken Item
                 </a>
 
                 <!-- Staff-Only Action Row (Archive & Update) -->
                 <div id="staff-buttons-row" class="d-none gap-2">
-                    <!-- 2. Update Data Button -->
                     <button type="button" id="btn-open-update-modal" class="btn btn-outline-primary rounded-pill py-2 flex-grow-1 fw-semibold d-flex align-items-center justify-content-center gap-2" data-bs-toggle="modal" data-bs-target="#updateAssetModal">
                         <i class="bi bi-pencil-square"></i> Update Data
                     </button>
-
-                    <!-- 3. Archive / Soft-delete Button -->
                     <button type="button" id="btn-archive-item" class="btn btn-outline-secondary rounded-pill py-2 flex-grow-1 fw-semibold d-flex align-items-center justify-content-center gap-2">
                         <i class="bi bi-archive"></i> Archive Asset
                     </button>
@@ -141,7 +140,6 @@
                             </select>
                         </div>
 
-                        <!-- Dropdown list options from utility for Building & Room as requested -->
                         <div class="row g-2 mb-3">
                             <div class="col-6">
                                 <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Building Block</label>
@@ -155,7 +153,6 @@
                             </div>
                         </div>
 
-                        <!-- Price: Increase/decrease by 1.00 every click (step="1.00") -->
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Price (RM)</label>
                             <div class="input-group">
@@ -191,19 +188,30 @@
         import { auth, db, getCurrentUserRole } from './js/config.js';
         import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
+        // Parse Asset ID from URL query parameters (supports ?id=, ?ID=, ?tag=, ?asset= or embedded id=)
         const urlParams = new URLSearchParams(window.location.search);
-        const assetId = urlParams.get('id');
+        let rawId = urlParams.get('id') || urlParams.get('ID') || urlParams.get('tag') || urlParams.get('assetId') || urlParams.get('asset') || "";
+        if (rawId.includes('id=')) {
+            rawId = rawId.split('id=').pop().split('&')[0];
+        }
+        let assetId = decodeURIComponent(rawId).trim();
         let currentAssetData = null;
         let campusFacilities = {};
 
         // 1. EXIT BUTTON HANDLER
-        document.getElementById('btn-exit-inventory').addEventListener('click', () => {
-            const user = auth.currentUser;
-            if (user) {
+        // If guest: prompts login first before redirecting to inventory
+        document.getElementById('btn-exit-inventory')?.addEventListener('click', async () => {
+            const userEmail = sessionStorage.getItem('currentLoginEmail');
+            let role = null;
+            try {
+                role = await getCurrentUserRole();
+            } catch (e) {}
+
+            if (userEmail || (role === 'staff' || role === 'student')) {
                 window.location.href = "inventory.php";
             } else {
-                // Guest scanning QR: prompt login first
-                window.location.href = "login.php?redirect=inventory.php";
+                alert("Please log in as a student or staff member to access the campus inventory.");
+                window.location.href = `login.php?redirect=${encodeURIComponent('inventory.php')}`;
             }
         });
 
@@ -268,33 +276,106 @@
             }
         };
 
+        // If no ID is passed, render on-page QR scanner & manual input
         if (!assetId) {
-            document.getElementById('main-content-body').innerHTML = `
-                <div class="text-center py-5 text-danger">
-                    <i class="bi bi-qr-code-scan display-4 mb-3 d-block text-secondary"></i>
-                    <h5 class="fw-bold">No Asset ID Specified</h5>
-                    <p class="text-muted small mb-3">Please scan a valid asset QR code or enter from inventory.</p>
-                    <a href="inventory.php" class="btn btn-primary rounded-pill px-4">Go to Inventory</a>
-                </div>`;
+            renderScanUi();
         } else {
             loadUtilityOptions().then(() => loadAssetInfo());
         }
 
+        function renderScanUi() {
+            document.getElementById('main-content-body').innerHTML = `
+                <div class="text-center py-3">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3" style="width:60px;height:60px;">
+                        <i class="bi bi-qr-code-scan fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-1">Scan Physical QR Tag</h5>
+                    <p class="text-muted small mb-3">Point your camera at the item's QR tag or enter its Tag ID manually.</p>
+                    <div id="info-qr-reader" class="w-100 bg-dark rounded-3 overflow-hidden border mb-3" style="min-height: 250px;"></div>
+                    <div class="card bg-light border-0 p-3 rounded-3 mb-3 text-start">
+                        <label class="form-label small fw-semibold text-secondary mb-1">Enter Tag ID Manually:</label>
+                        <div class="input-group">
+                            <input type="text" id="manual-tag-input" class="form-control" placeholder="e.g. TARUMT-a00000002">
+                            <button class="btn btn-primary" type="button" id="btn-manual-go">View Asset</button>
+                        </div>
+                    </div>
+                </div>`;
+
+            // Start QR Scanner
+            try {
+                const qr = new Html5Qrcode("info-qr-reader");
+                qr.start(
+                    { facingMode: "environment" },
+                    { fps: 10, qrbox: { width: 220, height: 220 } },
+                    (decodedText) => {
+                        qr.stop().then(() => {
+                            let cleanTag = decodedText.trim();
+                            if (cleanTag.includes('id=')) cleanTag = cleanTag.split('id=').pop().split('&')[0];
+                            window.location.href = `info.php?id=${encodeURIComponent(cleanTag)}`;
+                        }).catch(() => {
+                            window.location.href = `info.php?id=${encodeURIComponent(decodedText.trim())}`;
+                        });
+                    },
+                    () => {}
+                ).catch(err => {
+                    document.getElementById('info-qr-reader').innerHTML = `
+                        <div class="p-4 text-center text-light small d-flex flex-column align-items-center justify-content-center h-100" style="min-height: 220px;">
+                            <i class="bi bi-camera-video-off fs-1 text-warning mb-2"></i>
+                            <span>Camera unavailable. Please enter the Tag ID manually below.</span>
+                        </div>`;
+                });
+            } catch (e) {}
+
+            document.getElementById('btn-manual-go')?.addEventListener('click', () => {
+                const val = document.getElementById('manual-tag-input').value.trim();
+                if (val) window.location.href = `info.php?id=${encodeURIComponent(val)}`;
+            });
+            document.getElementById('manual-tag-input')?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const val = document.getElementById('manual-tag-input').value.trim();
+                    if (val) window.location.href = `info.php?id=${encodeURIComponent(val)}`;
+                }
+            });
+        }
+
         async function loadAssetInfo() {
             try {
-                const docSnap = await getDoc(doc(db, "assets", assetId));
-                if (!docSnap.exists()) {
+                // 1. Exact match attempt
+                let docSnap = await getDoc(doc(db, "assets", assetId));
+                let foundAsset = null;
+                let canonicalId = assetId;
+
+                if (docSnap.exists()) {
+                    foundAsset = docSnap.data();
+                    canonicalId = docSnap.id;
+                } else {
+                    // 2. Case-insensitive lookup across assets collection
+                    const allSnap = await getDocs(collection(db, "assets"));
+                    allSnap.forEach(d => {
+                        if (d.id.toLowerCase() === assetId.toLowerCase()) {
+                            foundAsset = d.data();
+                            canonicalId = d.id;
+                        }
+                    });
+                }
+
+                if (!foundAsset) {
                     document.getElementById('main-content-body').innerHTML = `
-                        <div class="text-center py-5 text-danger">
+                        <div class="text-center py-5">
                             <i class="bi bi-search display-4 mb-3 d-block text-secondary"></i>
                             <h5 class="fw-bold text-dark">Asset Not Found</h5>
-                            <p class="text-muted small mb-3">No asset found matching Tag ID: <span class="font-monospace">${assetId}</span></p>
-                            <a href="inventory.php" class="btn btn-primary rounded-pill px-4">Back to Inventory</a>
+                            <p class="text-muted small mb-3">No asset found matching Tag ID: <span class="font-monospace fw-bold text-danger">${assetId}</span></p>
+                            <div class="d-flex justify-content-center gap-2">
+                                <button onclick="window.location.href='info.php'" class="btn btn-outline-primary rounded-pill px-4">
+                                    <i class="bi bi-qr-code-scan me-1"></i>Scan Another Tag
+                                </button>
+                            </div>
                         </div>`;
                     return;
                 }
 
-                currentAssetData = docSnap.data();
+                assetId = canonicalId;
+                currentAssetData = foundAsset;
 
                 document.getElementById('item-name').innerText = currentAssetData.name || 'Unnamed Asset';
                 document.getElementById('item-id').innerText = `Tag ID: ${assetId}`;
@@ -318,12 +399,14 @@
                 loadMaintenanceHistory(assetId);
 
                 const archiveBtn = document.getElementById('btn-archive-item');
-                if (currentAssetData.isArchived) {
-                    archiveBtn.innerHTML = `<i class="bi bi-arrow-counterclockwise"></i> Restore Asset`;
-                    archiveBtn.className = "btn btn-outline-success rounded-pill py-2 flex-grow-1 fw-semibold d-flex align-items-center justify-content-center gap-2";
-                } else {
-                    archiveBtn.innerHTML = `<i class="bi bi-archive"></i> Archive Asset`;
-                    archiveBtn.className = "btn btn-outline-secondary rounded-pill py-2 flex-grow-1 fw-semibold d-flex align-items-center justify-content-center gap-2";
+                if (archiveBtn) {
+                    if (currentAssetData.isArchived) {
+                        archiveBtn.innerHTML = `<i class="bi bi-arrow-counterclockwise"></i> Restore Asset`;
+                        archiveBtn.className = "btn btn-outline-success rounded-pill py-2 flex-grow-1 fw-semibold d-flex align-items-center justify-content-center gap-2";
+                    } else {
+                        archiveBtn.innerHTML = `<i class="bi bi-archive"></i> Archive Asset`;
+                        archiveBtn.className = "btn btn-outline-secondary rounded-pill py-2 flex-grow-1 fw-semibold d-flex align-items-center justify-content-center gap-2";
+                    }
                 }
 
             } catch (err) {
@@ -332,7 +415,11 @@
         }
 
         async function evaluateRolePermissions(assetData) {
-            const role = await getCurrentUserRole();
+            let role = null;
+            try {
+                role = await getCurrentUserRole();
+            } catch (e) {}
+
             const priceRow = document.getElementById('price-row');
             const staffButtonsRow = document.getElementById('staff-buttons-row');
 

@@ -6,8 +6,8 @@ import { doc, getDoc, collection, query, where, getDocs } from "https://www.gsta
 const currentFile = window.location.pathname.split("/").pop() || "index.php";
 const urlParams = new URLSearchParams(window.location.search);
 const isPublicPage = currentFile === "login.php" || 
-                     (currentFile === "info.php" && urlParams.has("id")) || 
-                     (currentFile === "report.php" && urlParams.has("id"));
+                     currentFile === "info.php" || 
+                     currentFile === "report.php";
 
 // 15-Minute Inactivity Auto-Logout Tracker
 let lastActivity = Date.now();
@@ -39,11 +39,15 @@ onAuthStateChanged(auth, async (user) => {
 
     if (user) {
         const initial = (user.email || 'U').charAt(0).toUpperCase();
+        const savedId = sessionStorage.getItem('currentLoginId');
+        const displayLabel = savedId || user.email || "User";
+        const initial = displayLabel.charAt(0).toUpperCase();
         if (userAvatar) userAvatar.innerText = initial;
         
         // Show current user gmail / email account cleanly as requested
         if (sidebarEmail) {
             sidebarEmail.innerText = user.email || "No Email";
+            sidebarEmail.innerText = displayLabel;
             sidebarEmail.title = user.email || "";
         }
 
@@ -77,6 +81,8 @@ onAuthStateChanged(auth, async (user) => {
         window.dispatchEvent(new CustomEvent("userRoleReady", { detail: { role, user } }));
 
     } else {
+        sessionStorage.removeItem('currentLoginEmail');
+        sessionStorage.removeItem('currentLoginId');
         window.currentUserRole = null;
         if (userAvatar) userAvatar.innerText = "?";
         if (sidebarEmail) sidebarEmail.innerText = "Guest User";
