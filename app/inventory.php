@@ -16,18 +16,25 @@
         border-color: #0d6efd !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06) !important;
     }
-    .maintenance-dot {
-        width: 12px;
-        height: 12px;
-        background-color: #dc3545;
-        border: 2px solid #ffffff;
-        border-radius: 50%;
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        z-index: 10;
-        pointer-events: none;
-        box-shadow: none !important;
+
+    /* RESTORE CONTAINER HEIGHT */
+    .ratio::before {
+        content: "" !important;
+    }
+
+    /* REMOVE CIRCULAR CLIPPING & OVAL MASKS */
+    .asset-card .ratio,
+    .asset-card img {
+        border-radius: 0 !important;
+        clip-path: none !important;
+        -webkit-clip-path: none !important;
+        mask-image: none !important;
+        -webkit-mask-image: none !important;
+    }
+
+    /* REMOVE DARK OVERLAY LAYER */
+    .asset-card .ratio::after {
+        display: none !important;
     }
 </style>
 
@@ -425,9 +432,6 @@
             <div class="col">
                 <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden position-relative asset-card" 
                      onclick="window.location.href='info.php?id=${encodeURIComponent(asset.id)}'">
-                    
-                    <!-- Small Red Dot at top-left corner if reported -->
-                    ${hasReport ? `<span class="maintenance-dot" title="Active Maintenance Ticket Reported"></span>` : ''}
 
                     <!-- Asset Image Centered with Aspect Ratio -->
                     <div class="ratio ratio-4x3 bg-light border-bottom position-relative overflow-hidden">

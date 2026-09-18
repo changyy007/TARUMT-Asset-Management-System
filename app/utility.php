@@ -428,6 +428,11 @@
 
     window.addEventListener('userRoleReady', async (e) => {
         isStaff = e.detail.role === 'staff';
+
+        //reveal staff-only elements
+        document.querySelectorAll('[data-staff-only]').forEach(el => {
+            el.classList.toggle('d-none', !isStaff);
+        });
         renderList();
     });
 

@@ -124,12 +124,6 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             </a>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <?php if ($currentPage === 'index.php'): ?>
-            <button type="button" class="btn btn-primary btn-sm px-3 rounded-pill d-flex align-items-center gap-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#scanLookupModal" title="Scan asset QR tag">
-                <i class="bi bi-qr-code-scan"></i>
-                <span class="d-none d-sm-inline">Scan Tag</span>
-            </button>
-            <?php endif; ?>
             <span class="badge bg-secondary bg-opacity-25 text-light rounded-pill px-3 py-2 small d-none d-md-inline-block">
                 <i class="bi bi-check-circle-fill text-success me-1"></i>System Online
             </span>

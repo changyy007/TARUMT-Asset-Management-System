@@ -10,7 +10,14 @@ export const STUDENT_ALLOWED_PAGES = new Set([
 export const STAFF_ONLY_PAGES = new Set(['financial.php', 'people.php']);
 
 export function currentPageName() {
-    return window.location.pathname.split('/').pop() || 'index.php';
+    const page = window.location.pathname.split('/').pop();
+    
+    // If the URL is just a folder name or doesn't end in .php, default to index.php
+    if (page === '' || !page.endsWith('.php')) {
+        return 'index.php';
+    }
+    
+    return page;
 }
 
 export function isPublicPage(page = currentPageName()) {

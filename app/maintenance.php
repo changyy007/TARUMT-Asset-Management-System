@@ -9,6 +9,14 @@
         transform: translateY(-5px);
         box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1) !important;
     }
+    /* Add this inside the <style> tags of maintenance.php & inventory.php to force clean rectangular images */
+    .ratio img, 
+    .card-img-top, 
+    .report-card img, 
+    .asset-card img {
+    clip-path: none !important;
+    border-radius: 0 !important;
+    }
 </style>
 
 <div class="container-fluid px-0 px-md-2">

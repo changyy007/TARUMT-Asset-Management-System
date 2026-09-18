@@ -385,6 +385,17 @@
 
     window.addEventListener('userRoleReady', (e) => {
         viewerIsStaff = e.detail.role === 'staff';
+
+        //Block student/guest access and redirect to home
+        if (!viewerIsStaff) {
+            window.location.href = "index.php";
+            return;
+        }
+
+        //reveal staff-only elements
+        document.querySelectorAll('[data-staff-only]').forEach(el => {
+            el.classList.toggle('d-none', !viewerIsStaff);
+        });
         renderPeopleList();
     });
 

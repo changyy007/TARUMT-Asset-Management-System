@@ -98,10 +98,16 @@ onAuthStateChanged(auth, async (user) => {
         applyNavVisibility(null);
         wireProtectedLinks();
 
-        if (!isPublicPage(currentPageName())) {
+        //bypass
+        const path = window.location.pathname.toLowerCase();
+        const isHomePage = path.includes('index.php') || path.endsWith('/');
+
+        if (!isHomePage && !isPublicPage(currentPageName())) {
+            console.warn("Redirecting to login. Path:", path);
             const returnUrl = encodeURIComponent(window.location.href);
             window.location.href = `login.php?redirect=${returnUrl}`;
         } else {
+            console.log("Allowed public access to:", path);
             window.dispatchEvent(new CustomEvent("userRoleReady", { detail: { role: null, user: null } }));
         }
     }

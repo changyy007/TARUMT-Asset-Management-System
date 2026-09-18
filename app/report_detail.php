@@ -69,7 +69,7 @@
                     <label class="form-label small fw-semibold text-secondary mb-1">Enter Maintenance Cost (RM)</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white">RM</span>
-                        <input type="number" id="detail-cost-input" step="0.01" min="0" value="0.00" class="form-control" placeholder="0.00">
+                        <input type="number" id="detail-cost-input" step="1.00" min="0" value="0.00" class="form-control" placeholder="0.00">
                     </div>
                     <div class="form-text small text-muted">Enter actual repair expense (can be 0 if fixed internally).</div>
                 </div>

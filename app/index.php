@@ -304,4 +304,28 @@ service cloud.firestore {
     }
 
     loadDashboardStats();
+
+    
+document.addEventListener("DOMContentLoaded", function() {
+    // Check if the user has an active session from login.php
+    const isLoggedIn = sessionStorage.getItem('currentLoginId') !== null;
+
+    // Intercept clicks on the 4 main module cards
+    const statCards = document.querySelectorAll('.stat-card');
+    
+    statCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            e.preventDefault(); 
+            const targetModule = this.getAttribute('data-module-link');
+            
+            if (isLoggedIn) {
+                // User is logged in, allow them to proceed
+                window.location.href = targetModule;
+            } else {
+                // Guest user, redirect to login page with a return URL
+                window.location.href = 'login.php?redirect=' + encodeURIComponent(targetModule);
+            }
+        });
+    });
+});
 </script>
