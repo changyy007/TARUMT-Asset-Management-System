@@ -9,13 +9,46 @@
         transform: translateY(-5px);
         box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1) !important;
     }
-    /* Add this inside the <style> tags of maintenance.php & inventory.php to force clean rectangular images */
-    .ratio img, 
+    /* Keep maintenance photos rectangular and free of decorative masks. */
+    .report-card .ratio,
+    .ratio img,
     .card-img-top, 
     .report-card img, 
     .asset-card img {
     clip-path: none !important;
+    -webkit-clip-path: none !important;
     border-radius: 0 !important;
+    mask: none !important;
+    -webkit-mask: none !important;
+    }
+
+    .report-card .ratio {
+        aspect-ratio: 1 / 1 !important;
+        height: auto !important;
+        padding-bottom: 0 !important;
+    }
+
+    .report-card .ratio img {
+        object-fit: cover !important;
+        object-position: center center !important;
+    }
+    .report-card .ratio::before,
+    .report-card .ratio::after,
+    .report-card::before,
+    .report-card::after,
+    .report-card .ratio img::before,
+    .report-card .ratio img::after {
+        content: none !important;
+        display: none !important;
+        background: transparent !important;
+        border-radius: 0 !important;
+        clip-path: none !important;
+        mask: none !important;
+    }
+
+    .report-card .ratio img {
+        position: relative !important;
+        z-index: 1 !important;
     }
 </style>
 
@@ -260,11 +293,11 @@
 
             const cardHTML = `
             <div class="col">
-                <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden position-relative report-card"
+                <div class="card shadow-sm border-0 rounded-4 overflow-hidden position-relative report-card"
                      onclick="window.location.href='report_detail.php?id=${encodeURIComponent(ticket.id)}'">
                     
                     <!-- Defect Photo from Reporter -->
-                    <div class="ratio ratio-4x3 bg-light border-bottom position-relative overflow-hidden">
+                    <div class="ratio ratio-1x1 bg-light border-bottom position-relative overflow-hidden">
                         <img src="${photo}" alt="" class="img-fluid object-fit-cover w-100 h-100" onerror="this.src='picture/images.jpg'">
                         
                         <!-- Severity Badge at Top-Left of Photo -->
@@ -279,12 +312,15 @@
                     </div>
 
                     <!-- Details Area below picture -->
-                    <div class="card-body p-3 d-flex flex-column justify-content-between">
+                    <div class="card-body p-3">
                         <div>
                             <h6 class="card-title fw-bold text-dark text-truncate mb-1" title="${ticket.assetName}">
                                 ${ticket.assetName}
                             </h6>
                             <span class="text-muted small font-monospace">${ticket.assetId || 'Unspecified'}</span>
+                            <div class="text-muted small mt-2">
+                                <i class="bi bi-geo-alt me-1"></i>${ticket.assetLocation}
+                            </div>
                         </div>
 
                         <!-- Card Footer with Report Date in Bottom-Right Corner -->

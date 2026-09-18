@@ -32,9 +32,35 @@
         -webkit-mask-image: none !important;
     }
 
-    /* REMOVE DARK OVERLAY LAYER */
-    .asset-card .ratio::after {
+    .asset-card .ratio {
+        aspect-ratio: 1 / 1 !important;
+        height: auto !important;
+        padding-bottom: 0 !important;
+    }
+
+    .asset-card .ratio img {
+        object-fit: cover !important;
+        object-position: center center !important;
+    }
+
+    /* Keep the asset photo area rectangular and free of decorative masks. */
+    .asset-card .ratio::before,
+    .asset-card .ratio::after,
+    .asset-card::before,
+    .asset-card::after,
+    .asset-card .ratio img::before,
+    .asset-card .ratio img::after {
+        content: none !important;
         display: none !important;
+        background: transparent !important;
+        border-radius: 0 !important;
+        clip-path: none !important;
+        mask: none !important;
+    }
+
+    .asset-card .ratio img {
+        position: relative !important;
+        z-index: 1 !important;
     }
 </style>
 
@@ -430,11 +456,11 @@
             // Removed QR text content and removed "view details" words as requested.
             const cardHTML = `
             <div class="col">
-                <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden position-relative asset-card" 
+                <div class="card shadow-sm border-0 rounded-4 overflow-hidden position-relative asset-card" 
                      onclick="window.location.href='info.php?id=${encodeURIComponent(asset.id)}'">
 
                     <!-- Asset Image Centered with Aspect Ratio -->
-                    <div class="ratio ratio-4x3 bg-light border-bottom position-relative overflow-hidden">
+                    <div class="ratio ratio-1x1 bg-light border-bottom position-relative overflow-hidden">
                         <img src="${photo}" alt="" class="img-fluid object-fit-cover w-100 h-100" onerror="this.src='picture/images.jpg'">
                         
                         <!-- Location Badge at top-right corner of box -->
@@ -444,12 +470,15 @@
                     </div>
 
                     <!-- Details Area below picture -->
-                    <div class="card-body p-3 d-flex flex-column justify-content-between">
+                    <div class="card-body p-3">
                         <div>
                             <h6 class="card-title fw-bold text-dark text-truncate mb-1" title="${asset.name || 'Unnamed Asset'}">
                                 ${asset.name || 'Unnamed Asset'}
                             </h6>
                             <span class="badge bg-secondary-subtle text-secondary rounded-pill small">${asset.category || 'N/A'}</span>
+                            <div class="text-muted small mt-2">
+                                <i class="bi bi-geo-alt me-1"></i>${building} - ${room}
+                            </div>
                         </div>
 
                         <!-- Card Footer -->
