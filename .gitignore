@@ -1,5 +1,6 @@
 # Ignore sensitive server credentials
 .vscode/sftp.json
+.env
 
 # Ignore local config files with potential secrets
 /js/config.php

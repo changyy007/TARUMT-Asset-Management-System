@@ -3,15 +3,11 @@ import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "ht
 import { getAuth, setPersistence, browserSessionPersistence, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-storage.js";
 
-export const firebaseConfig = {
-  apiKey: "AIzaSyDuvpuStG61ywn1eOx-Q-XHHe866-t_5GQ",
-  authDomain: "assetmanagementsystem-86fcf.firebaseapp.com",
-  projectId: "assetmanagementsystem-86fcf",
-  storageBucket: "assetmanagementsystem-86fcf.firebasestorage.app",
-  messagingSenderId: "710144417947",
-  appId: "1:710144417947:web:1ba59a6f0d34fc2cd1263e",
-  measurementId: "G-D645QJSQ51"
-};
+const configResponse = await fetch(new URL("../api/firebase_config.php", import.meta.url));
+if (!configResponse.ok) {
+  throw new Error("Could not load Firebase configuration");
+}
+export const firebaseConfig = await configResponse.json();
 
 // Singleton — avoids "Firebase App named '[DEFAULT]' already exists" error
 export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
